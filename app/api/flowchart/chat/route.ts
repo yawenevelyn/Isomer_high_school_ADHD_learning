@@ -29,7 +29,7 @@ export async function POST(request: Request) {
   - Avoid repeating the same information verbatim from the node details, or from the previous chat history.`;
 
   const result = streamText({
-    model: openai('gpt-4o'),
+    model: openai('gpt-4o-mini'),
     system: systemPrompt,
     messages: convertToModelMessages(messages),
     temperature: 0.7,

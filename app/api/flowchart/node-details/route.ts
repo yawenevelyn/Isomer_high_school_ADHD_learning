@@ -17,7 +17,7 @@ export async function POST(req: Request) {
   }
 
   const result = streamText({
-    model: openai('gpt-4o'),
+    model: openai('gpt-4o-mini'),
     prompt: `
     Your task is to extract detailed relevant section from the full learning material based on the given one mind map node.
 

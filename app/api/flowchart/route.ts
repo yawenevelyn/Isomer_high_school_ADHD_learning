@@ -17,7 +17,7 @@ export async function POST() {
     }
 
   const result = streamObject({
-    model: openai('gpt-4o'),
+    model: openai('gpt-4o-mini'),
     schema: flowchartSchema,
     prompt: `
     You are an expert instructional designer. Build a professional "learning routine" mind map for ADHD learners as a directed acyclic graph (DAG) from the material below.

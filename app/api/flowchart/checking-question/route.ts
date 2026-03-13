@@ -15,7 +15,7 @@ export async function POST(req: Request) {
   const { nodeName, nodeDetails } = await req.json();
 
   const result = streamObject({
-    model: openai('gpt-4o'),
+    model: openai('gpt-4o-mini'),
     schema: checkingQuestionSchema,
     prompt: `
     You are generating one focused comprehension check about the node "${nodeName}".
