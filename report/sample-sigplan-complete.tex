@@ -1,0 +1,107 @@
+%%
+%% Isomer: The Adaptive Academic Material Creator for High School Students with ADHD
+%% Complete report (ACM SIGPLAN format)
+%%
+\documentclass[sigplan,screen]{acmart}
+
+\AtBeginDocument{%
+  \providecommand\BibTeX{{%
+    Bib\TeX}}}
+
+\begin{document}
+
+\title{Isomer: The Adaptive Academic Material Creator for High School Students with ADHD}
+
+\author{Aman Upganlawar}
+\affiliation{%
+  \institution{Columbia University}
+  \city{New York}
+  \country{USA}
+}
+
+\author{Yawen Zheng}
+\affiliation{%
+  \institution{Columbia University}
+  \city{New York}
+  \country{USA}}
+
+\begin{abstract}
+We present Isomer, a RAG-powered learning platform that turns textbook content into an interactive, ADHD-friendly mind map for high school mathematics. The system grounds all generated content in a verified Open Educational Resource (OER) corpus via Retrieval-Augmented Generation (RAG), reducing hallucinations and ensuring alignment with curricular standards. Teachers select a topic (e.g., Complex Numbers or Logic); the system retrieves only the corresponding chapter chunks, generates a directed acyclic graph of learning nodes, and lets students explore node-level details, Socratic chat, and check-for-understanding questions—all constrained to the retrieved material. A teacher-in-the-loop dashboard allows educators to compare original textbook passages with ADHD-adapted versions (bulleted summaries, key terms, and comprehension questions) before releasing content to students. We describe the agent design, knowledge-base integration, and example use cases, and discuss contributions to inclusive educational technology and directions for future work.
+\end{abstract}
+
+\keywords{ADHD, retrieval-augmented generation, RAG, mind map, high school mathematics, large language models, educational technology, neurodiverse learners, teacher-in-the-loop, OER}
+
+\maketitle
+
+\section{Introduction}
+
+\subsection{Impact of ADHD in High School Education}
+Neurodiverse students encounter unique cognitive and executive hurdles within the high school educational environment. A primary example is the prevalence of Attention-Deficit/Hyperactivity Disorder (ADHD), a neuro-developmental condition characterized by persistent patterns of inattention, hyperactivity, and impulsivity. According to the most recent data from the Centers for Disease Control and Prevention \cite{cdc2024adhd}, the prevalence of ADHD among adolescents aged 12--17 has reached approximately 11.4\% in the United States, effectively meaning that one in seven high school students is impacted by the disorder.
+
+Previous studies illustrate that the reconstruction of knowledge through visual and non-linear frameworks---such as mind mapping---serves as a critical intervention for these learners. Mind maps alleviate extraneous cognitive load by externalizing executive functions, thereby improving information retention and procedural efficiency for students with ADHD \cite{french2019barriers}.
+
+\subsection{LLMs and RAG in Education}
+While recent advancements in Large Language Model (LLM)-powered education have introduced potential solutions for neurodivergent learning \cite{tang2025exploring}, existing systems frequently lack the specificity and structural grounding required for high school curricula. General-purpose LLMs often struggle with mathematical accuracy and lack a targeted pedagogical ``voice'' for adolescents.
+
+\subsection{Research Objectives}
+Consequently, this research investigates the application of autonomous agents combined with Retrieval-Augmented Generation (RAG) technology to refine LLM-based mind-map generators \cite{tang2025exploring}. By grounding the model in verified high school mathematics corpora, this study aims to create a specialized, ADHD-friendly educational agent that provides structured, interactive, and Socratic learning pathways for secondary students.
+
+\section{System Architecture}
+
+\subsection{Agent Design}
+Isomer is implemented as a multi-component pipeline in which each agent is constrained by the same RAG-backed knowledge base.
+
+\textbf{Ingestion (Isomerizer).} Raw textbook content (plain text or markdown) is split by chapter headers into logical units. A \emph{RecursiveCharacterTextSplitter} (LangChain) produces chunks of configurable size with overlap to avoid splitting mid-sentence or mid-formula. Each chunk is embedded with OpenAI's \texttt{text-embedding-3-small} and stored in ChromaDB with metadata including \texttt{chapter\_title} and optional \texttt{page\_number}. This supports both full-textbook and short demo corpora (e.g., a curated six-chapter subset).
+
+\textbf{Mind-Map Agent.} When a teacher or student selects a chapter (e.g., ``Complex numbers''), the frontend requests retrieval filtered by that chapter. The retrieved chunks are passed to an LLM (GPT-4o-mini) with a structured prompt that enforces a directed acyclic graph (DAG): 8--12 nodes in five layers (Overview \& goals, Foundations, Core concepts, Practice/Apply, Review/Check). Node labels are required to reflect concepts actually present in the retrieved material, so each node has supporting content and avoids generic or off-topic titles.
+
+\textbf{Content-Extraction Agent.} For a selected node, the system retrieves chunks by node name and chapter, then streams a focused summary or extraction. The prompt instructs the model to always provide relevant content from the material (e.g., paraphrasing or quoting the closest sections) rather than refusing; this prevents ``the textbook does not cover this'' responses when the material does contain related content.
+
+\textbf{Chat Agent.} Conversational Q\&A is grounded in the same RAG store. The retrieval query combines the user's message and the current node name; if no chunks are returned, the system falls back to retrieving all chunks for the selected chapter. The LLM is instructed to answer only from the provided context and to say ``The textbook does not cover this'' only when the question is clearly outside that context. This keeps explanations accurate and topic-scoped.
+
+\textbf{ADHD-Adaptation (Transform) Agent.} A separate utility takes a raw textbook paragraph and produces: (1) a bulleted summary, (2) a list of key terms, and (3) one ``Check for Understanding'' multiple-choice question. This output is used both for on-demand node summaries and for the teacher dashboard's ``Isomer (adapted)'' view.
+
+\textbf{Teacher-in-the-Loop Dashboard.} Educators can select a chapter and view side-by-side the \emph{original} textbook chunks and the \emph{adapted} versions (bullets, key terms, check question). This allows verification of scientific truth and pedagogical appropriateness before students access the material.
+
+\subsection{Knowledge Base Integration via RAG}
+To ensure the system provides domain-specific and pedagogically accurate support for high school mathematics, Retrieval-Augmented Generation (RAG) is employed. The primary objective of the RAG implementation is to ground the LLM in verified academic content, thereby mitigating the risk of mathematical hallucinations and ensuring alignment with secondary education standards.
+
+The core of the knowledge base is constructed from an Open Educational Resource (OER) titled High School Mathematics Extensions (Wikibooks). This corpus was selected due to its structured categorization of mathematical definitions, procedural practice problems, and detailed solution sets. For deployment and demos, a curated subset (\texttt{isomer\_demo\_textbook.txt}) covering six topics---Primes and modular arithmetic, Logic, Mathematical proofs, Infinity and infinite processes, Basic counting, and Complex numbers---is used to keep ingestion and retrieval fast while preserving multi-topic breadth. By utilizing an OER, the system maintains a high degree of transparency and ethical data sourcing while providing the agent with a robust truth-grounded feature.
+
+Within the RAG framework, the textbook content is processed into semantic vectors (ChromaDB with cosine similarity), allowing the agent to retrieve precise information---such as definitions of the imaginary unit $i$ or steps for proof by contradiction---in response to students' queries and selected nodes. Metadata filtering by \texttt{chapter\_title} ensures that mind-map generation, node details, and chat are scoped to the chosen topic, avoiding cross-chapter hallucination (e.g., returning ``Complex numbers'' content when the user selected ``Trigonometry'').
+
+\subsection{Implementation Overview}
+The frontend is a Next.js 15 (App Router) application using React Flow for the interactive mind map, the Vercel AI SDK for streaming LLM responses, and Tailwind CSS for layout. The RAG backend is implemented in Python: FastAPI exposes \texttt{/chapters}, \texttt{/retrieve}, \texttt{/chat}, \texttt{/transform}, and \texttt{/ingest}; ChromaDB persists the vector store; and LangChain handles text splitting. The frontend proxies all RAG calls to this backend, so that a single \texttt{OPENAI\_API\_KEY} and optional \texttt{RAG\_API\_URL} configure the full pipeline.
+
+\section{Experiments and Example Use Cases}
+
+\textbf{Use case 1: Topic-scoped mind map.} A teacher selects ``Complex numbers'' from the Topic/Chapter dropdown. The system retrieves only chunks tagged with that chapter, then generates a DAG whose nodes include ``Overview \& goals,'' ``Imaginary unit $i$,'' ``Form $a+bi$,'' ``Arithmetic of complex numbers,'' and ``Argand plane.'' Each node label corresponds to content present in the retrieved material, so subsequent detail and chat flows have direct support.
+
+\textbf{Use case 2: Node details and chat.} A student clicks the node ``Arithmetic of complex numbers.'' They click ``Extract Node Details'' and receive a streamed summary drawn from the OER (e.g., adding real parts, FOIL with $i^2=-1$). They then open the Chat tab and ask, ``Tell me about arithmetic of complex numbers.'' The chat agent retrieves chunks using both the question and the node name; the returned context includes the arithmetic section, and the model answers from it without hallucinating. If retrieval had returned no chunks, the system would fall back to all chunks for ``Complex numbers,'' still keeping the answer grounded.
+
+\textbf{Use case 3: Checking questions.} For the same node, the student requests a ``Generate Checking Question'' and receives a four-option multiple-choice item plus an explanation, all generated under instructions to stay consistent with the retrieved node content. This supports low-stakes self-assessment within the same RAG scope.
+
+\textbf{Use case 4: Teacher dashboard.} An educator navigates to the Teacher dashboard, selects ``Logic,'' and sees a list of original textbook chunks. For each chunk, they can request an ``adapted'' version: bulleted summary, key terms, and a check-for-understanding question. By comparing original and adapted side-by-side, the teacher verifies that the adapted material preserves scientific correctness before assigning it to students.
+
+Together, these use cases demonstrate end-to-end flow: ingestion, retrieval, mind-map generation, node-level content and chat, and teacher oversight, all operating on the same RAG-backed knowledge base.
+
+\section{Discussion}
+
+\subsection{Contributions to Inclusive Educational Technology}
+
+The development of the Isomer system represents a significant step toward fostering an equitable and inclusive educational environment for neurodiverse secondary students. By integrating Retrieval-Augmented Generation (RAG) into a multi-agent framework, this research successfully transitions LLM-based instruction from a generalized linguistic model to a domain-specific pedagogical tool for high school mathematics. The primary advantage of this grounding is the substantial enhancement of epistemic reliability; by anchoring the agent's output in verified OER mathematics corpora, the system minimizes the frequency of ``hallucinations,'' which is a critical requirement for students with ADHD who may struggle with self-correcting misinformation.
+
+\subsection{Limitations and Future Research Directions}
+
+Despite the promising performance of the Isomer architecture, several constraints remain that offer avenues for future inquiry:
+
+\textbf{Corpus breadth.} While the current RAG implementation utilizes a comprehensive OER textbook (and a curated six-topic demo), the inclusion of more diverse high school mathematics datasets---such as multi-modal problem sets and pedagogical workbooks---would provide more robust academic support and accommodate a wider range of instructional styles.
+
+\textbf{Psychological and clinical integration.} A notable opportunity for enhancement lies in the integration of ADHD-specific Knowledge Graphs (KG). Future iterations could incorporate Cognitive Behavioral Therapy (CBT) principles or executive function scaffolding theories into the agent's decision-making logic. This would allow the system to adapt not just to the student's mathematical errors, but to their specific psychological profile and focus patterns.
+
+\textbf{Cross-disciplinary extensibility.} While this study focused on the quantitative requirements of mathematics, the underlying multi-agent RAG framework is inherently modular. Subsequent research should evaluate the system's efficacy in more text-heavy or abstract high school subjects, such as History or Biology, where the mind-map reconstruction strategy remains highly relevant for ADHD learners.
+
+\bibliographystyle{ACM-Reference-Format}
+\bibliography{sample-base}
+
+\end{document}

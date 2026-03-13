@@ -40,7 +40,13 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-# local materials
-public/*.txt
+# local materials (optional: remove to commit demo textbook)
+# public/*.txt
+
+# Python / RAG backend
+backend/venv/
+backend/chroma_db/
+__pycache__/
+*.pyc
 
 

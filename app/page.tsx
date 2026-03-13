@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { ReactFlow, Node, Edge, NodeMouseHandler, ReactFlowInstance } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { useCompletion } from '@ai-sdk/react';
@@ -223,7 +223,18 @@ export default function HomePage() {
     const [selectedNode, setSelectedNode] = useState<Node | null>(null);
     const [doneNodes, setDoneNodes] = useState<Set<string>>(new Set());
     const [viewMode, setViewMode] = useState<'details' | 'chat'>('details');
+    const [chapters, setChapters] = useState<string[]>([]);
+    const [selectedChapter, setSelectedChapter] = useState<string>('');
     const reactFlowInstance = useRef<ReactFlowInstance | null>(null);
+
+    useEffect(() => {
+        fetch('/api/chapters')
+            .then((r) => r.json())
+            .then((d) => {
+                if (Array.isArray(d.chapters) && d.chapters.length > 0) setChapters(d.chapters);
+            })
+            .catch(() => {});
+    }, []);
 
     const { completion, complete, isLoading: isLoadingDetails, setCompletion: setCompletionDetails, stop: stopDetailsGeneration } = useCompletion({
         api: '/api/flowchart/node-details',
@@ -243,7 +254,11 @@ export default function HomePage() {
     const generateFlowchart = async () => {
         setIsGenerating(true);
         try {
-            const response = await fetch('/api/flowchart', { method: 'POST' });
+            const response = await fetch('/api/flowchart', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ chapter_title: selectedChapter || undefined }),
+            });
             if (!response.ok) throw new Error('Failed to generate flowchart');
 
             const reader = response.body?.getReader();
@@ -297,7 +312,7 @@ export default function HomePage() {
 
     const generateNodeDetails = () => {
         const nodeName = (selectedNode?.data as { label?: string })?.label || selectedNode?.id;
-        complete('', { body: { nodeName } });
+        complete('', { body: { nodeName, chapter_title: selectedChapter || undefined } });
     };
 
     const handleChatClick = () => {
@@ -314,7 +329,25 @@ export default function HomePage() {
         <div className='w-full h-screen bg-stone-50 flex'>
             <div className='w-1/2 h-screen bg-gradient-to-br from-blue-100 to-red-100 p-4 flex flex-col'>
                 <div className='mb-4 space-y-2 flex-shrink-0'>
-                    <div>Sample learning material uploaded.</div>
+                    <div className='flex items-center justify-between'>
+                        <span>Sample learning material uploaded.</span>
+                        <a href='/teacher' className='text-sm text-blue-600 hover:underline font-medium'>Teacher dashboard</a>
+                    </div>
+                    {chapters.length > 0 && (
+                        <div className='flex flex-col gap-1'>
+                            <label className='text-sm font-medium text-gray-700'>Topic / Chapter (RAG)</label>
+                            <select
+                                value={selectedChapter}
+                                onChange={(e) => setSelectedChapter(e.target.value)}
+                                className='rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500'
+                            >
+                                <option value=''>All material</option>
+                                {chapters.map((c) => (
+                                    <option key={c} value={c}>{c}</option>
+                                ))}
+                            </select>
+                        </div>
+                    )}
                     <button onClick={generateFlowchart} disabled={isGenerating} className={STYLES.button}>
                         {isGenerating ? 'Generating...' : 'Generate Interactive Mind Map'}
                     </button>
@@ -393,6 +426,7 @@ export default function HomePage() {
 								<FlowchartChat
 									nodeName={nodeName}
 									nodeDetails={completion}
+									chapter_title={selectedChapter || undefined}
 									isOpen={viewMode === 'chat'}
 									onClose={() => setViewMode('details')}
 								/>

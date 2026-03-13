@@ -4,25 +4,58 @@ import { flowchartSchema } from '@/app/types/challenges';
 import fs from 'fs';
 import path from 'path';
 
+const RAG_API_URL = process.env.RAG_API_URL || 'http://localhost:8000';
+
 export const maxDuration = 60;
 
-export async function POST() {
-    let learningMaterial = "";
+export async function POST(req: Request) {
+  let learningMaterial = '';
+  const body = await req.json().catch(() => ({}));
+  const chapterTitle = (body.chapter_title as string) || '';
+
+  // Grounded RAG: if backend available and chapter selected, use only that chapter's chunks
+  if (chapterTitle && RAG_API_URL) {
     try {
-        const filePath = path.join(process.cwd(), 'public', 'High_School_Mathematics_Extensions.txt');
-        learningMaterial = fs.readFileSync(filePath, 'utf-8');
-    } catch (e) {
-        console.error("cannot read material:", e);
-        learningMaterial = "material read failed";
+      const res = await fetch(`${RAG_API_URL}/retrieve`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query: chapterTitle, chapter_title: chapterTitle, n_results: 15 }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        const chunks = (data.chunks || []) as { text?: string }[];
+        if (chunks.length > 0) {
+          learningMaterial = chunks.map((c) => c.text || '').join('\n\n---\n\n');
+        }
+      }
+    } catch (_) {
+      // fallback to full file
     }
+  }
+
+  if (!learningMaterial) {
+    const demoPath = path.join(process.cwd(), 'public', 'isomer_demo_textbook.txt');
+    const fullPath = path.join(process.cwd(), 'public', 'High_School_Mathematics_Extensions.txt');
+    try {
+      if (fs.existsSync(demoPath)) {
+        learningMaterial = fs.readFileSync(demoPath, 'utf-8');
+      } else {
+        learningMaterial = fs.readFileSync(fullPath, 'utf-8');
+      }
+    } catch (e) {
+      console.error('cannot read material:', e);
+      learningMaterial = 'material read failed';
+    }
+  }
 
   const result = streamObject({
     model: openai('gpt-4o-mini'),
     schema: flowchartSchema,
     prompt: `
     You are an expert instructional designer. Build a professional "learning routine" mind map for ADHD learners as a directed acyclic graph (DAG) from the material below.
+    ${chapterTitle ? `Topic/Chapter: ${chapterTitle}. Use ONLY this material—do not add content from other chapters.` : ''}
     Material (Context):
-    ${learningMaterial.slice(0, 15000)}
+    ${learningMaterial.slice(0, 20000)}
 
     Strict goals:
     - Generate 8–12 total nodes.
@@ -39,7 +72,7 @@ export async function POST() {
     - L4 Review/Check/Wrap-up (1–2 nodes): self-check, recap, next steps; terminal is here.
 
     Labels and IDs:
-    - Use concise 3–6 word labels with a numeric prefix to signal sequence, e.g. "1. Overview & goals", "2. Immutability basics".
+    - Create node labels that match concepts actually present in the material (use terms, section names, and headings from the material) so each node has clear supporting content. Use a numeric prefix, e.g. "1. Overview & goals", "2. [concept from material]".
     - Use sequential node ids: n1, n2, ..., nK, where n1 is the root and the last id is the terminal.
 
     Layout constraints (absolute positions):
@@ -56,8 +89,6 @@ export async function POST() {
     Ensure the result is fully connected from n1 (root) down to the terminal node placed in L4.
     `,
   });
-  
+
   return result.toTextStreamResponse();
 }
-
-

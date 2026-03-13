@@ -1,0 +1,31 @@
+Primes and modular arithmetic
+A prime number is a natural number that has exactly two divisors: itself and 1. 1 is not prime. 2 is the first prime. Any natural number (except 1) can be expressed as the product of primes in exactly one way (Fundamental Theorem of Arithmetic).
+Sieve of Eratosthenes: A method to find all primes up to N by crossing out multiples of primes starting from 2.
+Modular Arithmetic: Arithmetic modulo m uses numbers between 0 and m-1. For example, in mod 7, 11 is 4. An inverse of 'a' mod 'm' exists if and only if gcd(a,m) = 1.
+
+Logic
+Mathematical logic uses implications: "If P then Q." If P is true, then Q must be true. 
+Truth Tables: A basic tool to define operations like AND, OR, NOT, and Implication (P → Q). 
+Boolean Algebra: Laws like De Morgan's theorems help simplify complex logical expressions. This is foundational for computer science and mathematical reasoning.
+
+Mathematical proofs
+A theorem is a mathematical fact that must be proven. 
+Direct Proof: Drawing a conclusion directly from axioms or established theorems.
+Mathematical Induction: To prove a statement for all natural numbers: 1) Prove the base case (n=1). 2) Show that if it holds for n, it must hold for n+1.
+Proof by Contradiction: Assume the opposite of what you want to prove, then show it leads to a logical impossibility. Example: Proving that √2 is irrational.
+
+Infinity and infinite processes
+Infinity (∞) is not a number but a concept representing a quantity larger than any real number. 
+Countability: A set is "countably infinite" if it can be put in a 1-to-1 correspondence with the natural numbers (N). Integers (Z) and Rationals (Q) are countable.
+Uncountable Sets: The set of Real numbers (R) is "bigger" than N and is uncountable. There are different "sizes" of infinity (Cantor's diagonal argument).
+
+Basic counting
+Permutations (Ordered selection): The number of ways to arrange m items out of n is P(n,m) = n! / (n-m)!. Order matters (e.g., a race finish).
+Combinations (Unordered selection): The number of ways to choose m items out of n is C(n,m) = n! / [m!(n-m)!]. Order does not matter (e.g., a committee).
+Factorial (!): n! = n × (n-1) × ... × 1. By definition, 0! = 1.
+
+Complex numbers
+The imaginary unit 'i' is defined by i² = -1. This allows solutions to quadratic equations like x² + 1 = 0.
+Form: A complex number is z = a + bi, where 'a' is the real part and 'b' is the imaginary part.
+Arithmetic: Add real parts to real parts; multiply using the distributive law (FOIL) and replacing i² with -1.
+Argand Plane: Representing z = a + bi as a point (a, b) in a 2D plane with a Real axis and an Imaginary axis.

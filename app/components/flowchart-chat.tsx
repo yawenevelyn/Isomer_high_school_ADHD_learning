@@ -9,11 +9,12 @@ import { MemoizedMarkdown } from './memoized-markdown';
 interface FlowchartChatProps {
   nodeName?: string;
   nodeDetails?: string;
+  chapter_title?: string;
   isOpen: boolean;
   onClose: () => void;
 }
 
-export function FlowchartChat({ nodeName, nodeDetails, isOpen }: FlowchartChatProps) {
+export function FlowchartChat({ nodeName, nodeDetails, chapter_title, isOpen }: FlowchartChatProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [input, setInput] = useState('');
   const [voiceEnabled, setVoiceEnabled] = useState(true);
@@ -25,7 +26,7 @@ export function FlowchartChat({ nodeName, nodeDetails, isOpen }: FlowchartChatPr
   const { messages, sendMessage, status } = useChat({
     transport: new TextStreamChatTransport({
       api: '/api/flowchart/chat',
-      body: { nodeName, nodeDetails },
+      body: { nodeName, nodeDetails, chapter_title },
     }),
   });
 
