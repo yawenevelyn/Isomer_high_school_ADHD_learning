@@ -232,6 +232,5 @@ Isomer_high_school_ADHD_learning/
 
 ---
 
-## License
-
-See [LICENSE](LICENSE) in the repository.
+## Original Code Inspiration:
+https://github.com/PhysiologicAILab/llm-driven-interactive-mind-map/tree/main
